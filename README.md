@@ -1,1 +1,2 @@
-# Azure Synapse DW External Table 생성하기
+# Azure Synapse DW External Table 생성
+# TPCH Data Loading

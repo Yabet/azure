@@ -1,0 +1,47 @@
+/* Azure Synapse에서 Gen2의 파일 읽고 External Table 생성 */
+# https://learn.microsoft.com/en-us/sql/t-sql/statements/create-external-data-source-transact-sql?view=azure-sqldw-latest&preserve-view=true&tabs=dedicated
+
+/* 1. Azure Storage 접속할수 있는 Credential 생성*/
+CREATE DATABASE SCOPED CREDENTIAL credential_adls
+WITH
+IDENTITY = 'adls2yabet' ,
+SECRET = 'gtqS+YkJJoAwQ14WSYSZ+UwpO+tcXT7rc7xyRgsCoiWF3s8F1CaUtr6ZUTYmyusat9gV+SkJja4F+AStM2AxeQ==';
+
+/* 2. 데이터 소스 만들기 */
+Drop EXTERNAL data source tpch;
+CREATE EXTERNAL DATA SOURCE tpch
+WITH (
+  LOCATION = 'abfss://adls2@adls2yabet.dfs.core.windows.net/tpch/400G',
+-- LOCATION = 'abfss://container@accountname.dfs.core.windows.net/tpch/400G',
+    CREDENTIAL = ADLS_credential
+);
+/* Gen2사용할때는 abfss를 사용해야한다
+https://learn.microsoft.com/en-us/sql/t-sql/statements/create-external-data-source-transact-sql?view=azure-sqldw-latest&preserve-view=true&tabs=dedicated
+*/
+
+/* 파일 포맷 생성 */
+drop EXTERNAL FILE FORMAT format_pipe;
+CREATE EXTERNAL FILE FORMAT format_pipe
+    WITH (
+        FORMAT_TYPE = DELIMITEDTEXT,
+        FORMAT_OPTIONS(
+            FIELD_TERMINATOR = '|'
+        )
+);
+
+drop table nation;
+CREATE EXTERNAL TABLE nation
+(
+    N_NATIONKEY		int,
+    N_NAME		varchar(25),
+    N_REGIONKEY		int,
+    N_COMMENT		VARCHAR(152)
+)
+WITH
+(
+    DATA_SOURCE = tpch,
+    LOCATION = 'nation.tbl',
+    FILE_FORMAT = format_pipe
+);
+
+select * from nation;
